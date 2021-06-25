@@ -1,5 +1,5 @@
 {
-  "name": "ic-md",
+  "name": "@IC-Tech/ic-md",
   "version": "1.0.0",
   "description": "simple markdown parser",
   "main": "src/index.js",
@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/IC-Tech/ic-md/issues"
   },
-  "homepage": "https://github.com/IC-Tech/ic-md#readme"
+  "homepage": "https://github.com/IC-Tech/ic-md#readme",
+  "publishConfig": {
+    "registry":"https://npm.pkg.github.com"
+  }
 }
