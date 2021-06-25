@@ -173,6 +173,21 @@ const parse = (a, op) => {
 		if(typeof l[c] == 'string') l[c] = l[c] + (l[c] && l[c].match(/\S$/) ? ' ' : '') + d
 		else l.push(d)
 		if(b.match(/[ ]{2,}$/)) l.push('')
+	},
+	split = (a, i) => {
+		var b = [], c = 0
+		while((c = a.indexOf(i, c)) != -1) {
+			if(a[c - 1] == '\\') {
+				a = a.substr(1)
+				c++
+				continue
+			}
+			b.push(a.substr(0, c))
+			a = a.substr(c + 1)
+			c = 0
+		}
+		if(a) b.push(a)
+		return b
 	}
 	for (var i = 0; i < a.length; i++) {
 		if(m = a[i].match(/^([#]{1,6}) ([^]*)$/)) {
@@ -196,6 +211,14 @@ const parse = (a, op) => {
 			continue
 		}
 		if(m = ul(i, '-')) {
+			if(m != i && !l[c = l.length - 1].ch.some(a => !a.a.match(/^\[(x| )\] /))) {
+				l[c].ch = l[c].ch.map(a => {
+					a.v = a.a[1] != ' '
+					a.a = a.a.substr(4).trim()
+					return a
+				})
+				l[c].t = 'cl'
+			}
 			i = m
 			continue
 		}
@@ -246,6 +269,26 @@ const parse = (a, op) => {
 			if(c.length > 3) {
 				l.push({ch: c.slice(1).join('\n'), t: 'codeblock', lang: ''})
 				i = c[0]
+				continue
+			}
+		}
+		if(a[i].indexOf('|') && a[i + 1] && a[i + 1].match(/^[\s:|-]*$/)) {
+			var l1 = []
+			for (var j = i; j < a.length; j++) {
+				var t = a[j].trimEnd()
+				if(!t.match(/(^|[^\\])\|/)) break
+				if(t.startsWith('|')) t = t.substr(1)
+				if(t.endsWith('|') && !t.endsWith('\\|')) t = t.substr(0, t.length - 1)
+				l1.push(split(t, '|').map(a => a.trim()))
+				c = j
+			}
+			if(l1.length > 2 && !l1[1].some(a => !a.match(/^[:-]*$/)) && l1[0].length == l1[1].length) {
+				for (var j = 2; j < l1.length; j++) {
+					if(l1[j].length < l1[0].length) while(l1[j].length < l1[0].length) l1[j].push('')
+					else if(l1[j].length > l1[0].length) l1[j] = l1[j].slice(0, l1[0].length)
+				}
+				l.push({ch: [l1[0], ...l1.slice(2)], t: 'table'})
+				i = c
 				continue
 			}
 		}
