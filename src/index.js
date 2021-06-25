@@ -66,7 +66,7 @@ const inlines = (a, op) => {
 					i = m + c - 1
 					if(op.auto_bi && c == 3) {
 						l[c = l.length - 1].t = 'i'
-						l[c] = {ch: l[c], t: 'b'}
+						l[c] = {ch: l[c].ch, t: 'b'}
 					}
 					continue
 				}
@@ -144,7 +144,8 @@ const parse = (a, op) => {
 	if(!op) op = {}
 	a = decode(a.replace(/[\r]/g, '').replace(/(^[\n]*|[\n]*$)?/, '')).split('\n')
 	var m, c, l = []
-	const ul = (i,z) => {
+	const slist = a => a.length == 0 ? a : parse(a.map(a => a.trimStart()).join('\n')),
+	ul = (i,z) => {
 		if(!a[i].match(z = new RegExp('^\\' + z + ' ([^]*)$'))) return 0
 		var j = i, l1 = [], bl = 0
 		for (; j < a.length; j++) {
@@ -164,7 +165,7 @@ const parse = (a, op) => {
 			else break
 		}
 		if(l1.length == 0) return 0
-		l.push({ch: l1.map(a => ({a: a[0], b: a[1]})), t: 'ul'})
+		l.push({ch: l1.map(a => ({a: a[0], b: slist(a[1])})), t: 'ul'})
 		return c
 	},
 	def = i => {
@@ -205,9 +206,19 @@ const parse = (a, op) => {
 			l.push({t: 'hr'})
 			continue
 		}
-		if((m = a[i].match(/^([```]{3,})([^]*)?/)) && (c = a.indexOf(m[1], i + 1)) != -1) {
-			l.push({ch: a.slice(i + 1, c).join('\n'), t: 'codeblock', lang: (m[2] || '').trim()})
-			i = c
+		if(m = a[i].match(/^([`]{3,})([^]*)?/)) {
+			c = 0
+			m = [new RegExp("^[`]{" + m[1].length +"}(\\s*)?$"), m[2]]
+			for (var j = i + 1; j < a.length; j++) {
+				if(a[j].match(m[0])) {
+					c = j
+					break
+				}
+			}
+			if(c != 0) {
+				l.push({ch: a.slice(i + 1, c).join('\n'), t: 'codeblock', lang: (m[1] || '').trim()})
+				i = c
+			}
 			continue
 		}
 		if(m = ul(i, '-')) {
@@ -250,7 +261,7 @@ const parse = (a, op) => {
 				}
 				else break
 			}
-			l.push({ch: l1.sort((a,b) => b[0] - a[0]).map(a => ({a: a[1], b: parse(a[2].join('\n'))})), t: 'ol'})
+			l.push({ch: l1.sort((a,b) => b[0] - a[0]).map(a => ({a: a[1], b: slist(a[2])})), t: 'ol'})
 			i = c
 			continue
 		}
@@ -301,10 +312,10 @@ const parse = (a, op) => {
 		def(i)
 	}
 	return l.map(a => {
-		if(typeof a == 'string') return {ch: a ? inlines(a) : a, t: a ? 'p' : 'br'}
+		if(typeof a == 'string') return a ? {ch: inlines(a), t: 'p'} : {t:'br'}
 		if(a.t.match(/^h\d$/)) a.ch = inlines(a.ch, {image: 0})
 		if(a.t == 'table') a.ch = a.ch.map(a => a.map(a => inlines(a)))
-		if(a.t == 'ul' || a.t == 'ol') a.ch = a.ch.map(a => {
+		if(a.t == 'ul' || a.t == 'ol' || a.t == 'cl') a.ch = a.ch.map(a => {
 			a.a = inlines(a.a, {image: 0})
 			return a
 		})
