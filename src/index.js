@@ -272,7 +272,7 @@ const parse = (a, op) => {
 				continue
 			}
 		}
-		if(a[i].indexOf('|') && a[i + 1] && a[i + 1].match(/^[\s:|-]*$/)) {
+		if(a[i].indexOf('|') >= 0 && a[i + 1] && a[i + 1].match(/^[\s:|-]*$/)) {
 			var l1 = []
 			for (var j = i; j < a.length; j++) {
 				var t = a[j].trimEnd()
@@ -303,6 +303,7 @@ const parse = (a, op) => {
 	return l.map(a => {
 		if(typeof a == 'string') return {ch: a ? inlines(a) : a, t: a ? 'p' : 'br'}
 		if(a.t.match(/^h\d$/)) a.ch = inlines(a.ch, {image: 0})
+		if(a.t == 'table') a.ch = a.ch.map(a => a.map(a => inlines(a)))
 		if(a.t == 'ul' || a.t == 'ol') a.ch = a.ch.map(a => {
 			a.a = inlines(a.a, {image: 0})
 			return a
