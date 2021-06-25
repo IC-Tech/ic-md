@@ -1,6 +1,6 @@
 {
   "name": "@ic-tech/ic-md",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "simple markdown parser",
   "main": "src/index.js",
   "author": "Imesh Chamara <imesh1chamara@gmail.com>",

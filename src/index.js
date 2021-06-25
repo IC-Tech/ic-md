@@ -211,15 +211,11 @@ const parse = (a, op) => {
 			m = [new RegExp("^[`]{" + m[1].length +"}(\\s*)?$"), m[2]]
 			for (var j = i + 1; j < a.length; j++) {
 				if(a[j].match(m[0])) {
-					c = j
+					l.push({ch: a.slice(i + 1, i = c = j).join('\n'), t: 'codeblock', lang: (m[1] || '').trim()})
 					break
 				}
 			}
-			if(c != 0) {
-				l.push({ch: a.slice(i + 1, c).join('\n'), t: 'codeblock', lang: (m[1] || '').trim()})
-				i = c
-			}
-			continue
+			if(c) continue
 		}
 		if(m = ul(i, '-')) {
 			if(m != i && !l[c = l.length - 1].ch.some(a => !a.a.match(/^\[(x| )\] /))) {
