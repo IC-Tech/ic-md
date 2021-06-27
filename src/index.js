@@ -131,8 +131,8 @@ const inlines = (a, op) => {
 				)
 			)
 			if(m) {
-				l.push(m == 1 ? {t:'br'} : {ch: (m == 3 ? 'mailto:' : '') + a.substring(i + 1, c), t: 'a'})
-				i = c + 1
+				l.push(m == 1 ? {t:'br'} : {ch: a.substring(i + 1, c), url: (m == 3 ? 'mailto:' : '') + a.substring(i + 1, c), t: 'link'})
+				i = c
 				continue
 			}
 		}
