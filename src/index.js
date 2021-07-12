@@ -1,5 +1,6 @@
 const {decode} = require('ic-xentity')
 const backslash = '\\`*_{}[]<>()#+-.!|'
+const N = a => a !== 0 && a !== false
 const inlines = (a, op) => {
 	op = Object.assign({auto_bi: 1}, op || {})
 	const count = (a,b,c) => {
@@ -37,12 +38,12 @@ const inlines = (a, op) => {
 			def(i)
 			continue
 		}
-		if(a[i] == '*' && (op.bold !== 0 || op.italic !== 0)) {
+		if(a[i] == '*' && (N(op.bold) || N(op.italic))) {
 			c = count(a, '*', i)
 			if(c > 3) c = 3
 			if(!(
-				op.bold === 0 && (c == 3 || c == 2) ||
-				op.italic === 0 && (c == 3 || c == 1)
+				!N(op.bold) && (c == 3 || c == 2) ||
+				!N(op.italic) && (c == 3 || c == 1)
 			)) {
 				var i1 = i + c, c1
 				while(m = a.substr(i1).match(/(^|[^\\*])([*]{1,3})/)) {
@@ -72,7 +73,7 @@ const inlines = (a, op) => {
 				}
 			}
 		}
-		if(a[i] == '~' && op.strikethrough !== 0) {
+		if(a[i] == '~' && N(op.strikethrough)) {
 			if(a[i + 1] == '~' && (m = a.substr(i + 2).match(/(^|[^\\~])[~]{2}/))) {
 				m = i + 2 + (m[1] || '').length + m.index
 				l.push({ch: inlines(a.substring(i + 2, m), Object.assign({}, op, {strikethrough: 0})), t: 's'})
@@ -80,7 +81,7 @@ const inlines = (a, op) => {
 				continue
 			}
 		}
-		if(a[i] == '!' && a[i + 1] == '[' && op.image !== 0) {
+		if(a[i] == '!' && a[i + 1] == '[' && N(op.image)) {
 			var m1, m2, t
 			if(m1 = a.substr(i).match(/(^|[^\\\]])\]\(/)) {
 				t = a.substring(i + 2, m1 = i + (m1[1] || '').length + m1.index)
@@ -91,7 +92,7 @@ const inlines = (a, op) => {
 				}
 			}
 		}
-		if(a[i] == '[' && op.link !== 0) {
+		if(a[i] == '[' && N(op.link)) {
 			m = c = 0
 			for (var j = i + 1; j < a.length; j++) {
 				if(a[j] == '[' && a[j - 1] == '!' && a[j - 2] != '\\') c++
@@ -114,7 +115,7 @@ const inlines = (a, op) => {
 				continue
 			}
 		}
-		if(a[i] == '`' && op.code !== 0) {
+		if(a[i] == '`' && N(op.code)) {
 			c = count(a, '`', i)
 			var m = a.substr(i + c).match(new RegExp("(^|[^\\\\`])[`]{" + c + "}"))
 			if(m) {
@@ -123,7 +124,7 @@ const inlines = (a, op) => {
 				continue
 			}
 		}
-		if(a[i] == '<' && (c = a.indexOf('>', i)) != -1 && op.link !== 0) {
+		if(a[i] == '<' && (c = a.indexOf('>', i)) != -1 && N(op.link)) {
 			var t = a.substring(i + 1, c)
 			var m = t == 'br' ? 1 : (
 				t.match(/^https?:\/\//) ? 2 : (
@@ -191,22 +192,22 @@ const parse = (a, op) => {
 		return b
 	}
 	for (var i = 0; i < a.length; i++) {
-		if(m = a[i].match(/^([#]{1,6}) ([^]*)$/)) {
+		if(N(op.heading) && (m = a[i].match(/^([#]{1,6}) ([^]*)$/))) {
 			l.push({ch: m[2], t: 'h' + m[1].length})
 			continue
 		}
-		if(m = a[i].match(/^([>]{1,}) ([^]*)$/)) {
+		if(N(op.blockquote) && (m = a[i].match(/^([>]{1,}) ([^]*)$/))) {
 			c = []
 			for (var j = i; j < a.length; j++) if(a[j].startsWith(m[1])) c.push(a[j].substr(m[1].length).trimStart()); else break
 			l.push({ch: parse(c.join('\n')), t: 'blockquote'})
 			i += c.length - 1
 			continue
 		}
-		if(a[i].match(/^[*=-]{3,}$/)) {
+		if(N(op.rule) && a[i].match(/^[*=-]{3,}$/)) {
 			l.push({t: 'hr'})
 			continue
 		}
-		if(m = a[i].match(/^([`]{3,})([^]*)?/)) {
+		if(N(op.codeblock) && (m = a[i].match(/^([`]{3,})([^]*)?/))) {
 			c = 0
 			m = [new RegExp("^[`]{" + m[1].length +"}(\\s*)?$"), m[2]]
 			for (var j = i + 1; j < a.length; j++) {
@@ -217,8 +218,8 @@ const parse = (a, op) => {
 			}
 			if(c) continue
 		}
-		if(m = ul(i, '-')) {
-			if(m != i && !l[c = l.length - 1].ch.some(a => !a.a.match(/^\[(x| )\] /))) {
+		if(N(op.unordered_list) && (m = ul(i, '-'))) {
+			if(N(op.check_list) && m != i && !l[c = l.length - 1].ch.some(a => !a.a.match(/^\[(x| )\] /))) {
 				l[c].ch = l[c].ch.map(a => {
 					a.v = a.a[1] != ' '
 					a.a = a.a.substr(4).trim()
@@ -229,15 +230,15 @@ const parse = (a, op) => {
 			i = m
 			continue
 		}
-		if(m = ul(i, '+')) {
+		if(N(op.unordered_list) && (m = ul(i, '+'))) {
 			i = m
 			continue
 		}
-		if(m = ul(i, '*')) {
+		if(N(op.unordered_list) && (m = ul(i, '*'))) {
 			i = m
 			continue
 		}
-		if((m = a[i].match(/^([\d]*)\. [^]*$/)) && parseInt(m[1] || '') == 1) {
+		if(N(op.ordered_list) && (m = a[i].match(/^([\d]*)\. [^]*$/)) && parseInt(m[1] || '') == 1) {
 			var j = i, l1 = [], bl = 0
 			c = i
 			for (; j < a.length; j++) {
@@ -261,7 +262,7 @@ const parse = (a, op) => {
 			i = c
 			continue
 		}
-		if(m = a[i].match(/^(\t|[ ]{4})./)) {
+		if(N(op.codeblock) && (m = a[i].match(/^(\t|[ ]{4})./))) {
 			var j = i, bl = 0
 			m = m[1]
 			c = [j]
@@ -279,7 +280,7 @@ const parse = (a, op) => {
 				continue
 			}
 		}
-		if(a[i].indexOf('|') >= 0 && a[i + 1] && a[i + 1].match(/^[\s:|-]*$/)) {
+		if(N(op.table) && a[i].indexOf('|') >= 0 && a[i + 1] && a[i + 1].match(/^[\s:|-]*$/)) {
 			var l1 = []
 			for (var j = i; j < a.length; j++) {
 				var t = a[j].trimEnd()
@@ -300,19 +301,20 @@ const parse = (a, op) => {
 			}
 		}
 
-		if((m = a[i].trim()) && a[i + 1] && a[i + 1].match(/^[=-]{1,}$/)) {
+		if(N(op.heading) && (m = a[i].trim()) && a[i + 1] && a[i + 1].match(/^[=-]{1,}$/)) {
 			l.push({ch: m, t: 'h' + (a[++i][0] == '=' ? 1 : 2)})
 			continue
 		}
 		if(a[i - 1] == '' && a[i - 2] == '' && l[l.length - 1] != '') l.push('')
 		def(i)
 	}
+	var _op = Object.assign({}, op, {image: 0})
 	return l.map(a => {
-		if(typeof a == 'string') return a ? {ch: inlines(a), t: 'p'} : {t:'br'}
-		if(a.t.match(/^h\d$/)) a.ch = inlines(a.ch, {image: 0})
-		if(a.t == 'table') a.ch = a.ch.map(a => a.map(a => inlines(a)))
+		if(typeof a == 'string') return a ? {ch: inlines(a, op), t: 'p'} : {t:'br'}
+		if(a.t.match(/^h\d$/)) a.ch = inlines(a.ch, _op)
+		if(a.t == 'table') a.ch = a.ch.map(a => a.map(a => inlines(a, op)))
 		if(a.t == 'ul' || a.t == 'ol' || a.t == 'cl') a.ch = a.ch.map(a => {
-			a.a = inlines(a.a, {image: 0})
+			a.a = inlines(a.a, _op)
 			return a
 		})
 		return a
