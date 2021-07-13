@@ -43,11 +43,11 @@ const inlines = (a, op) => {
 		try {
 			var b = a.indexOf(' ')
 			if(b == -1) return ''
-			a = a.substr(b + 1)
+			a = bs(a.substr(b + 1))
 			return a[0] == '"' && JSON.parse(a) || a
 		}
 		catch (e) {}
-		return a
+		return bs(a)
 	}
 	var _d = {}, b = 0, c = 0, m = 0, l = [],
 	def = i => {
@@ -55,7 +55,7 @@ const inlines = (a, op) => {
 		else l.push(a[i])
 	}
 	for (var i = 0; i < a.length; i++) {
-		if(a[i] == '\\' && backslash.indexOf(a[i]) >= 0) {
+		if(a[i] == '\\' && backslash.indexOf(a[i + 1]) >= 0) {
 			i++
 			def(i)
 			continue
@@ -89,14 +89,14 @@ const inlines = (a, op) => {
 					i = m + c - 1
 					if(op.auto_bi && c == 3) {
 						l[c = l.length - 1].t = 'i'
-						l[c] = {ch: l[c].ch, t: 'b'}
+						l[c] = {ch: [l[c]], t: 'b'}
 					}
 					continue
 				}
 			}
 		}
 		if(a[i] == '~' && N(op.strikethrough)) {
-			if(a[i + 1] == '~' && (m = a.substr(i + 2).match(/(^|[^\\~])[~]{2}/))) {
+			if(a[i + 1] == '~' && (m = a.substr(i + 2).match(/(^|[^\\])[~]{2}/))) {
 				m = i + 2 + (m[1] || '').length + m.index
 				l.push({ch: inlines(a.substring(i + 2, m), Object.assign({}, op, {strikethrough: 0})), t: 's'})
 				i = m + 1
@@ -105,10 +105,10 @@ const inlines = (a, op) => {
 		}
 		if(a[i] == '!' && a[i + 1] == '[' && N(op.image)) {
 			var m1, m2, t
-			if(m1 = a.substr(i).match(/(^|[^\\\]])\]\(/)) {
+			if(m1 = a.substr(i).match(/(^|[^\\])\]\(/)) {
 				t = a.substring(i + 2, m1 = i + (m1[1] || '').length + m1.index)
 				if(m2 = _url(a, m1)) {
-					l.push({ch: t, url: (m1 = a.substring(m1 + 2, m2)).split(' ')[0], alt: _alt(m1), t: 'img'})
+					l.push({ch: bs(t), url: bs((m1 = a.substring(m1 + 2, m2)).split(' ')[0]), alt: _alt(m1), t: 'img'})
 					i = m2
 					continue
 				}
@@ -129,7 +129,7 @@ const inlines = (a, op) => {
 			if(m && a[m + 1] == '(' && (c = _url(a, m))) {
 				l.push({
 					ch: inlines(a.substring(i + 1, m), Object.assign({}, op, {link: 0})),
-					url: (m = a.substring(m + 2, c)).split(' ')[0],
+					url: bs((m = a.substring(m + 2, c)).split(' ')[0]),
 					alt: _alt(m),
 					t: 'link'
 				})
@@ -139,7 +139,7 @@ const inlines = (a, op) => {
 		}
 		if(a[i] == '`' && N(op.code)) {
 			c = count(a, '`', i)
-			var m = a.substr(i + c).match(new RegExp("(^|[^\\\\`])[`]{" + c + "}"))
+			var m = a.substr(i + c).match(new RegExp("(^|[^\\\\])[`]{" + c + "}"))
 			if(m) {
 				l.push({ch: a.substring(i + c, m = i + c + (m[1] || '').length + m.index), t: 'code'})
 				i = m + (c - 1)
