@@ -31,6 +31,14 @@ const md_parse = (a, op) => {
 			a.ch = `<thead>${a.ch[0]}</thead><tbody>${a.ch.slice(1).join('')}<tbody>`
 			return `<${a.t}>${a.ch}</${a.t}>`
 		}
+		if(a.t == 'hashtag') {
+			a.t = 'link'
+			a.url = 'https://twitter.com/hashtag/' + a.ch.substr(1)
+		}
+		if(a.t == 'mention') {
+			a.t = 'link'
+			a.url = 'https://twitter.com/' + a.ch.substr(1)
+		}
 
 		if(a.ch instanceof Array) a.ch = md_parse(a.ch, op)
 		if(a.t == 'link') return `<a${at({href: a.url, alt: a.alt || null})}>${a.ch}</a>`

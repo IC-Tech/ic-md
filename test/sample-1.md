@@ -36,3 +36,6 @@
 - [x] learn to swim
 - [ ] go to the beach
 - [ ] swim to Antarctica
+# hashtags and mentions
+*you have to manually turn on hashtags and mentions from options because they aren't official.*<br>
+#markdown parser made by @_IC_Tech_

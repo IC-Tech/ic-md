@@ -1,6 +1,20 @@
 const {decode} = require('ic-xentity')
 const backslash = '\\`*_{}[]<>()#+-.!|'
+// removed thd '\x5F' ('_')
+const mention_nochar = '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2A\x2B\x2C\x2D\x2E\x2F\x3A\x3B\x3C\x3D\x3E\x3F\x40\x5B\x5C\x5D\x5E\x60\x7B\x7C\x7D\x7E\x7F\x85\xA0\u115F\u1160\u1680\u180E\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u200B\u200C\u200D\u2012\u2013\u2014\u2015\u2018\u2019\u201B\u201C\u201D\u201E\u201F\u2028\u2029\u202F\u2032\u2033\u2034\u2035\u2036\u2037\u205F\u2060\u2800\u3000\u3164\uFEFF\uFFA0'
+const mention_match = (a, op) => {
+	var i = 0
+	if('0123456789'.indexOf(a[0]) >= 0) return 0 // common thing
+	for (; i < a.length; i++) if(mention_nochar.indexOf(a[i]) >= 0) break
+	return i >= (typeof op.mention_min == 'number' ? op.mention_min : 3) ? i : 0
+}
+const hashtag_match = (a, op) => {
+	var i = 0
+	for (; i < a.length; i++) if(mention_nochar.indexOf(a[i]) >= 0) break
+	return i >= (typeof op.hashtag_min == 'number' ? op.hashtag_min : 3) ? i : 0
+}
 const N = a => a !== 0 && a !== false
+const M = a => a === 1 || a === true
 const inlines = (a, op) => {
 	op = Object.assign({auto_bi: 1}, op || {})
 	const count = (a,b,c) => {
@@ -134,6 +148,22 @@ const inlines = (a, op) => {
 			if(m) {
 				l.push(m == 1 ? {t:'br'} : {ch: a.substring(i + 1, c), url: (m == 3 ? 'mailto:' : '') + a.substring(i + 1, c), t: 'link'})
 				i = c
+				continue
+			}
+		}
+		if(a[i] == '@' && M(op.mention)) {
+			c = (op.mention_match || mention_match)(a.substr(i + 1), op)
+			if(c) {
+				l.push({t: 'mention', ch: a.substr(i, c + 1)})
+				i += c
+				continue
+			}
+		}
+		if(a[i] == '#' && M(op.hashtag)) {
+			c = (op.hashtag_match || hashtag_match)(a.substr(i + 1), op)
+			if(c) {
+				l.push({t: 'hashtag', ch: a.substr(i, c + 1)})
+				i += c
 				continue
 			}
 		}

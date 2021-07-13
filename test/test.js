@@ -14,7 +14,7 @@ var temp = (t, b) => `<!DOCTYPE html>
 `.replace('{title}', t || '').replace('{body}', b || '')
 const a = a => {
 	var b = fs.readFileSync(a).toString()
-	b = md2html(b, {error: true})
+	b = md2html(b, {error: true, parse: {hashtag: 1, mention: 1}})
 	b = temp(a, b)
 	fs.writeFileSync(a + '.html', b)
 }
