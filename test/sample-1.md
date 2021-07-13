@@ -1,4 +1,4 @@
-\> [sample-0.md](sample-0.md.html) | **sample-1.md**
+\> [sample-0.md](sample-0.md.html) | **sample-1.md** | [sample-2.md](sample-2.md.html)
 # H1
 ## H2
 ### H3

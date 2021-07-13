@@ -15,6 +15,14 @@ const hashtag_match = (a, op) => {
 }
 const N = a => a !== 0 && a !== false
 const M = a => a === 1 || a === true
+const bs = a => {
+	var b = ''
+	for (var i = 0; i < a.length; i++) {
+		if(a[i] == '\\' && backslash.indexOf(a[i + 1]) >= 0) i++
+		b += a[i]
+	}
+	return b
+}
 const inlines = (a, op) => {
 	op = Object.assign({auto_bi: 1}, op || {})
 	const count = (a,b,c) => {
@@ -165,6 +173,16 @@ const inlines = (a, op) => {
 				l.push({t: 'hashtag', ch: a.substr(i, c + 1)})
 				i += c
 				continue
+			}
+		}
+
+
+		if(typeof op.custom == 'function' && (a[i] == ' ' || !i) && (m = a.substr(i + (c = i ? 1 : 0)).match(/^([\w]{1,})\(/)) && (m = m[1])) {
+			var t = a.substr(i + 1 + c + m.length).match(/(^|[^\\])\)/)
+			if(t && M(op.custom((m = [m, bs(a.substr(c = i + 1 + c + m.length, t.index + 1))])[0], m[1]))) {
+				if(i) def(i)
+				l.push({t: 'c-' + m[0], ch: m[1]})
+				i = c + t.index + 2
 			}
 		}
 		def(i)

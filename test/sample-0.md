@@ -1,4 +1,4 @@
-\> **sample-0.md** | [sample-1.md](sample-1.md.html)
+\> **sample-0.md** | [sample-1.md](sample-1.md.html) | [sample-2.md](sample-2.md.html)
 # Heading level 1
 ## Heading level 2
 ### Heading level 3

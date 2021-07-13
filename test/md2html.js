@@ -11,6 +11,12 @@ const md_parse = (a, op) => {
 		if(a.t == 'codeblock') return `<pre><code>${encode(a.ch)}</code></pre>`
 		if(a.t == 'img') return `<img${at({src: a.url, alt: a.ch || null, title: a.alt || null})}/>`
 
+		// custom functions
+		if(a.t && a.t.startsWith('c-') && typeof op.custom == 'function') {
+			var t = op.custom(a.t.substr(2), a.ch)
+			if(typeof t != 'undefined' && typeof t != 'null') return t.toString()
+		}
+
 		if(a.t == 'ul' || a.t == 'ol' || a.t == 'cl') {
 			a.ch = a.ch.map(a => {
 				a.a = md_parse(a.a, op)
@@ -41,10 +47,10 @@ const md_parse = (a, op) => {
 		}
 
 		if(a.ch instanceof Array) a.ch = md_parse(a.ch, op)
-		if(a.t == 'link') return `<a${at({href: a.url, alt: a.alt || null})}>${a.ch}</a>`
+		if(a.t == 'link') return `<a${at({href: a.url, title: a.alt || null})}>${a.ch}</a>`
 		if(a.t && a.t.match(/^h[1-6]$/) || ['p', 'blockquote', 'codeblock', 'code', 'a', 'b', 'i', 's'].indexOf(a.t) >= 0) return `<${a.t}>${a.ch}</${a.t}>`
-		if(op.error) throw new Error('unable to render')
 		console.error('unable to render', a)
+		if(op.error) throw new Error('unable to render')
 		return '<h1 style="color:red">unable to render</h1>'
 		return a
 	}).join('')
