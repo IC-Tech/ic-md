@@ -195,7 +195,7 @@ const parse = (a, op) => {
 	var m, c, l = []
 	const slist = a => a.length == 0 ? a : parse(a.map(a => a.trimStart()).join('\n')),
 	ul = (i,z) => {
-		if(!a[i].match(z = new RegExp('^\\' + z + ' ([^]*)$'))) return 0
+		if(!a[i].match(z = new RegExp('^\\' + z + ' ([^]*)$'))) return false
 		var j = i, l1 = [], bl = 0
 		for (; j < a.length; j++) {
 			var k = a[j].trimEnd()
@@ -213,7 +213,7 @@ const parse = (a, op) => {
 			}
 			else break
 		}
-		if(l1.length == 0) return 0
+		if(l1.length == 0) return false
 		l.push({ch: l1.map(a => ({a: a[0], b: slist(a[1])})), t: 'ul'})
 		return c
 	},
@@ -266,7 +266,7 @@ const parse = (a, op) => {
 			}
 			if(c) continue
 		}
-		if(N(op.unordered_list) && (m = ul(i, '-'))) {
+		if(N(op.unordered_list) && (m = ul(i, '-')) !== false) {
 			if(N(op.check_list) && m != i && !l[c = l.length - 1].ch.some(a => !a.a.match(/^\[(x| )\] /))) {
 				l[c].ch = l[c].ch.map(a => {
 					a.v = a.a[1] != ' '
@@ -278,11 +278,11 @@ const parse = (a, op) => {
 			i = m
 			continue
 		}
-		if(N(op.unordered_list) && (m = ul(i, '+'))) {
+		if(N(op.unordered_list) && (m = ul(i, '+')) !== false) {
 			i = m
 			continue
 		}
-		if(N(op.unordered_list) && (m = ul(i, '*'))) {
+		if(N(op.unordered_list) && (m = ul(i, '*')) !== false) {
 			i = m
 			continue
 		}
